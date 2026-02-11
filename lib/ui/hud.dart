@@ -59,7 +59,7 @@ class Hud extends StatelessWidget {
 
           // Micro-note — bottom-center (non-blocking)
           Positioned(
-            bottom: 48,
+            bottom: 80,
             left: kSafePadding,
             right: kSafePadding,
             child: _NoteDisplay(game: game),

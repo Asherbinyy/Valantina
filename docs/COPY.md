@@ -13,6 +13,9 @@ CTA: Tap to start
 4. You’re my favorite person.
 5. I choose you. Always.
 
+## All-hearts bonus
+ALL_HEARTS: You have ALL my love 💖
+
 ## Finish cutscene
 LINE_1: I found you 💖
 LINE_2: (pause 0.8s)

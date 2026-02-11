@@ -38,10 +38,11 @@ Total: 30–60 seconds.
 - Beat 3 (30–45s): slightly tighter rhythm + Note #2
 - Beat 4 (finish): calm runway, sparkle trail → Queen Cat
 
-### Obstacles (max 3 types)
-- Low spike (jump once)
+### Obstacles (3 types)
+- Spike (triangle, jump once)
+- Tall spike (taller, needs full jump)
+- Rock (wide rounded boulder, easy jump)
 - Small gap (jump once)
-- Moving “bad vibe” puff (slow, avoidable) OR replace with static hazard for simplicity
 
 ## 7) Failure handling (forgiving)
 On collision:
@@ -56,11 +57,16 @@ On collision:
 - CP3 at ~45s (optional if level is long)
 
 ## 9) Collectibles
-- Hearts: 10–20 total
+- Hearts: 14 total, placed at 4 height tiers:
+    - Ground (walk into)
+    - Low (small jump)
+    - High (full jump)
+    - Boost (double-tap boost jump)
 - Each heart triggers:
     - pop animation (scale up then fade)
-    - “ting” SFX
-- Optional: heart counter displayed top-left (small)
+    - "ting" SFX
+- Heart counter displayed top-left
+- All-hearts bonus: collect all 14 → special message + heart particle burst
 
 ## 10) Micro-notes (text moments)
 Triggered at checkpoints or fixed positions.
@@ -93,14 +99,19 @@ Overlay panel centered:
 YES → celebration state.
 
 ## 13) Celebration screen
-- Confetti burst
+- Confetti burst (80 colorful pieces, CustomPainter)
 - Message:
-    - “YAY!! 🎉”
-    - “Happy Valentine’s Day, my love.”
-    - “Coupon unlocked: <YOUR PLAN>”
+    - "YAY!! 🎉"
+    - "Happy Valentine's Day, my love."
+    - "Coupon unlocked: A surprise date night with me ✨"
 - Buttons:
-    - Restart
-    - (Optional) “Take a screenshot 📸” (no platform API; just text suggestion)
+    - Play again
+    - "Take a screenshot 📸" (text hint)
+
+## 16) Decorative scenery
+- Trees and bushes placed at fixed positions across the level
+- No collision, no interaction — purely visual
+- Render behind player (priority = -1)
 
 ## 14) Pause overlay (must have Restart)
 Pause overlay shows during PLAYING:

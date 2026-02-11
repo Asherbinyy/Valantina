@@ -9,6 +9,24 @@ class NoteData {
   const NoteData(this.tileX, this.text);
 }
 
+/// Heart placement — tile-X + height tier.
+enum HeartTier { ground, low, high, boost }
+
+class HeartPlacement {
+  final int tileX;
+  final HeartTier tier;
+  const HeartPlacement(this.tileX, this.tier);
+}
+
+/// Obstacle type — 3 varieties per GAME_SPEC §6.
+enum ObstacleType { spike, tallSpike, rock }
+
+class ObstacleData {
+  final int tileX;
+  final ObstacleType type;
+  const ObstacleData(this.tileX, this.type);
+}
+
 // ── Tile ──────────────────────────────────────────────
 const double kTileSize = 32.0;
 
@@ -26,30 +44,41 @@ const double kPlayerStartX = kStartXTile * kTileSize;
 const double kPlayerStartY = kGroundY - kPlayerHeight;
 
 // ── Auto-run (tune these) ─────────────────────────────
-const double kRunSpeed = 130.0; // was 150; slower = more reaction time
-const double kJumpVelocity = -420.0; // was -380; higher jump
-const double kBoostJumpMultiplier = 1.4; // was 1.35; bigger boost
-const int kDoubleTapWindowMs = 300; // was 250; slightly wider window
-const double kGravity = 820.0; // was 980; floatier jumps
+const double kRunSpeed = 130.0;
+const double kJumpVelocity = -390.0;
+const double kBoostJumpMultiplier = 1.4;
+const int kDoubleTapWindowMs = 300;
+const double kGravity = 820.0;
 const double kMaxFallSpeed = 600.0;
 
 // ── Debug ─────────────────────────────────────────────
-const bool kDebugInput = false; // set true to log tap/jump deltas
+const bool kDebugInput = false;
 
 // ── Checkpoints (tile-X) ──────────────────────────────
 const List<int> kCheckpointXTiles = [60, 120, 175];
 
-// ── Hazards ───────────────────────────────────────────
-const List<int> kSpikeTiles = [35, 48, 92, 108, 142, 160];
+// ── Hazards (typed) ───────────────────────────────────
+const List<ObstacleData> kObstacles = [
+  ObstacleData(35, ObstacleType.spike),
+  ObstacleData(48, ObstacleType.rock),
+  ObstacleData(92, ObstacleType.tallSpike),
+  ObstacleData(108, ObstacleType.spike),
+  ObstacleData(142, ObstacleType.rock),
+  ObstacleData(160, ObstacleType.tallSpike),
+];
 const List<List<int>> kGapRanges = [
   [70, 73],
   [130, 134],
 ];
 const double kGapFallThreshold = 80.0;
 
-// ── Obstacle size ─────────────────────────────────────
+// ── Obstacle sizes ────────────────────────────────────
 const double kSpikeWidth = 26.0;
 const double kSpikeHeight = 26.0;
+const double kTallSpikeWidth = 22.0;
+const double kTallSpikeHeight = 40.0;
+const double kRockWidth = 36.0;
+const double kRockHeight = 20.0;
 
 // ── Ground segments (derived from gap ranges) ─────────
 const List<List<int>> kGroundSegments = [
@@ -59,13 +88,41 @@ const List<List<int>> kGroundSegments = [
 ];
 const double kGroundThickness = 96.0;
 
-// ── Hearts ────────────────────────────────────────────
-const List<int> kHeartXTiles = [
-  10, 14, 18, 42, 55, 66, 78, 96, 110, 125, 146, 158, 170, 182,
+// ── Hearts (varied heights) ──────────────────────────
+const List<HeartPlacement> kHeartPlacements = [
+  // Beat 0: easy intro — ground level, learn to collect
+  HeartPlacement(10, HeartTier.ground),
+  HeartPlacement(14, HeartTier.ground),
+  HeartPlacement(18, HeartTier.low),
+  // Beat 1-2: mix of heights
+  HeartPlacement(42, HeartTier.high),
+  HeartPlacement(55, HeartTier.low),
+  HeartPlacement(66, HeartTier.ground),
+  HeartPlacement(78, HeartTier.boost),
+  // Beat 2-3: harder
+  HeartPlacement(96, HeartTier.high),
+  HeartPlacement(110, HeartTier.low),
+  HeartPlacement(125, HeartTier.boost),
+  // Beat 3-4: final stretch
+  HeartPlacement(146, HeartTier.high),
+  HeartPlacement(158, HeartTier.ground),
+  HeartPlacement(170, HeartTier.low),
+  HeartPlacement(182, HeartTier.boost),
 ];
+// Height above ground per tier (px)
+const double kHeartHeightGround = 20.0;
+const double kHeartHeightLow = 52.0;
+const double kHeartHeightHigh = 90.0;
+const double kHeartHeightBoost = 130.0;
 const double kHeartSize = 22.0;
-const double kHeartFloatAboveGround = 52.0;
-const double kHeartPopDuration = 0.4; // scale-up + fade-out total
+const double kHeartPopDuration = 0.4;
+
+// ── All-hearts bonus ─────────────────────────────────
+const String kAllHeartsNote = 'You have ALL my love 💖';
+
+// ── Scenery (decorative, no collision) ────────────────
+const List<int> kTreeTiles = [7, 22, 50, 80, 100, 138, 155, 190, 208];
+const List<int> kBushTiles = [5, 15, 30, 45, 62, 85, 115, 148, 172, 195];
 
 // ── Micro-notes (text from docs/COPY.md) ──────────────
 const int kNote1XTile = 25;
@@ -76,24 +133,21 @@ const List<NoteData> kNotes = [
   NoteData(kNote2XTile, "I'd jump any obstacle for you."),
   NoteData(kNote3XTile, 'Almost there…'),
 ];
-const double kNoteDuration = 2.5; // seconds visible
-const double kNoteTypewriterCps = 30; // characters per second
+const double kNoteDuration = 2.5;
+const double kNoteTypewriterCps = 30;
 
 // ── Finish / Cutscene ─────────────────────────────────
 const int kFinishXTile = 205;
 const int kQueenXTile = 212;
-// Queen uses same visual scale as player (28×36)
 const double kQueenWidth = kPlayerWidth;
 const double kQueenHeight = kPlayerHeight;
-const double kPlayerQueenGap = 6.0; // px gap between player and queen
-// Player snap position: just left of queen, both grounded
+const double kPlayerQueenGap = 6.0;
 const double kQueenWorldX = kQueenXTile * kTileSize;
 const double kPlayerFinishX = kQueenWorldX - kPlayerWidth - kPlayerQueenGap;
 const double kPlayerFinishY = kGroundY - kPlayerHeight;
-// Cutscene timing
-const double kCutsceneTextDuration = 2.5; // "I found you 💖" display time
-const double kCutscenePauseDuration = 0.8; // pause before valentine prompt
-const double kHeartParticleDuration = 2.5; // heart particle burst
+const double kCutsceneTextDuration = 2.5;
+const double kCutscenePauseDuration = 0.8;
+const double kHeartParticleDuration = 2.5;
 
 // ── Hit Recovery ──────────────────────────────────────
 const double kHitRecoveryDuration = 0.8;

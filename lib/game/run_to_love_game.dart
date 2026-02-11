@@ -8,12 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../ui/theme.dart';
+import 'components/finish_flag.dart';
 import 'components/ground.dart';
 import 'components/heart.dart';
 import 'components/heart_particles.dart';
 import 'components/obstacle.dart';
 import 'components/player.dart';
 import 'components/queen.dart';
+import 'components/scenery.dart';
 import 'constants.dart';
 
 /// Main game — state machine per docs/FLOWCHART.md.
@@ -52,10 +54,12 @@ class RunToLoveGame extends FlameGame
   // Double-tap boost tracking
   DateTime _lastTapTime = DateTime(0);
 
-  // ── Cutscene state ────────────────────────────────────
+  // Cutscene state
   double _cutsceneTimer = 0;
-  // Phases: 0=text ("I found you 💖"), 1=pause, 2=done→valentine prompt
   int _cutscenePhase = 0;
+
+  // All-hearts bonus
+  bool _allHeartsTriggered = false;
 
   @override
   Color backgroundColor() => AppColors.bgTop;
@@ -72,13 +76,29 @@ class RunToLoveGame extends FlameGame
   // ── Level construction ───────────────────────────────
 
   void _buildLevel() {
+    // Ground segments
     for (final seg in kGroundSegments) {
       world.add(GroundSegment(startTile: seg[0], endTile: seg[1]));
     }
-    for (final tileX in kSpikeTiles) {
-      world.add(Obstacle(tileX: tileX));
+
+    // Scenery (decorative, behind everything)
+    for (final tileX in kTreeTiles) {
+      world.add(Tree(tileX: tileX));
     }
+    for (final tileX in kBushTiles) {
+      world.add(Bush(tileX: tileX));
+    }
+
+    // Typed obstacles
+    for (final data in kObstacles) {
+      world.add(Obstacle(tileX: data.tileX, type: data.type));
+    }
+
+    // Hearts with varied heights
     _spawnHearts();
+
+    // Finish flag at end
+    world.add(FinishFlag());
 
     // Queen at end (same scale as player)
     world.add(Queen());
@@ -92,15 +112,14 @@ class RunToLoveGame extends FlameGame
   }
 
   void _spawnHearts() {
-    for (final tileX in kHeartXTiles) {
-      world.add(Heart(tileX: tileX));
+    for (final placement in kHeartPlacements) {
+      world.add(Heart(tileX: placement.tileX, tier: placement.tier));
     }
   }
 
   // ── Input ────────────────────────────────────────────
 
   void _handleJumpInput() {
-    // Block input outside PLAYING state (cutscene, paused, etc.)
     if (state.value != GameState.playing) return;
 
     final now = DateTime.now();
@@ -109,11 +128,11 @@ class RunToLoveGame extends FlameGame
 
     if (kDebugInput) {
       developer.log('tap delta=${elapsed}ms doubleTap=$isDoubleTap '
-          'onGround=${player.isOnGround} vy=${player.velocity.y.toStringAsFixed(1)}');
+          'onGround=${player.isOnGround} '
+          'vy=${player.velocity.y.toStringAsFixed(1)}');
     }
 
     if (isDoubleTap) {
-      // Retroactive boost: upgrade velocity if still ascending or on ground
       if (player.velocity.y < 0 || player.isOnGround) {
         player.velocity.y = kJumpVelocity * kBoostJumpMultiplier;
         if (player.isOnGround) {
@@ -148,7 +167,14 @@ class RunToLoveGame extends FlameGame
 
   void onHeartCollected() {
     heartsCollected.value++;
-    // TODO: play "ting" SFX when audio is wired
+
+    // All-hearts bonus check
+    if (!_allHeartsTriggered &&
+        heartsCollected.value >= kHeartPlacements.length) {
+      _allHeartsTriggered = true;
+      _showNote(kAllHeartsNote);
+      world.add(HeartParticles());
+    }
   }
 
   // ── Micro-notes ──────────────────────────────────────
@@ -187,39 +213,36 @@ class RunToLoveGame extends FlameGame
     }
   }
 
-  /// Transition PLAYING → FINISH_CUTSCENE.
-  /// - Snap player to deterministic final position (left of queen, grounded).
-  /// - Zero velocity and disable gravity/collisions via inCutscene flag.
-  /// - Player.update() will early-return since state != playing/hitRecovery.
-  /// - Spawn heart particles, show cutscene text.
   void _startCutscene() {
     state.value = GameState.finishCutscene;
 
-    // ── Freeze player ──
+    // Freeze player
     player.inCutscene = true;
     player.velocity.setZero();
     player.isOnGround = true;
 
-    // ── Deterministic snap: player just left of queen, both grounded ──
+    // Deterministic snap
     player.position
       ..x = kPlayerFinishX
       ..y = kPlayerFinishY;
 
-    // ── Pan camera to center on player+queen midpoint ──
+    // Camera → midpoint of player + queen
     camera.stop();
-    final midX = kPlayerFinishX + (kPlayerWidth + kPlayerQueenGap + kQueenWidth) / 2;
-    camera.viewfinder.position = Vector2(midX, kPlayerFinishY + kPlayerHeight / 2);
+    final midX =
+        kPlayerFinishX + (kPlayerWidth + kPlayerQueenGap + kQueenWidth) / 2;
+    camera.viewfinder.position =
+        Vector2(midX, kPlayerFinishY + kPlayerHeight / 2);
 
-    // ── Clear any active note ──
+    // Clear notes
     activeNoteText.value = null;
 
-    // ── Spawn heart particles ──
+    // Heart particles
     world.add(HeartParticles());
 
-    // ── Begin cutscene phases ──
-    _cutscenePhase = 0; // phase 0: show text
+    // Cutscene text
+    _cutscenePhase = 0;
     _cutsceneTimer = 0;
-    cutsceneText.value = 'I found you 💖'; // from docs/COPY.md
+    cutsceneText.value = 'I found you 💖';
 
     _syncOverlays();
   }
@@ -229,24 +252,23 @@ class RunToLoveGame extends FlameGame
     _cutsceneTimer += dt;
 
     switch (_cutscenePhase) {
-      case 0: // "I found you 💖" display
+      case 0: // "I found you 💖"
         if (_cutsceneTimer >= kCutsceneTextDuration) {
           _cutscenePhase = 1;
           _cutsceneTimer = 0;
-          cutsceneText.value = null; // hide text, pause
+          cutsceneText.value = null;
         }
-      case 1: // pause before valentine prompt
+      case 1: // Pause → valentine prompt
         if (_cutsceneTimer >= kCutscenePauseDuration) {
           _cutscenePhase = 2;
           cutsceneText.value = null;
-          // Transition to valentine prompt
           state.value = GameState.valentinePrompt;
           _syncOverlays();
         }
     }
   }
 
-  // ── State transitions (per docs/FLOWCHART.md) ────────
+  // ── State transitions ────────────────────────────────
 
   void startGame() {
     state.value = GameState.playing;
@@ -297,6 +319,7 @@ class RunToLoveGame extends FlameGame
         .toList()
         .forEach((p) => p.removeFromParent());
     heartsCollected.value = 0;
+    _allHeartsTriggered = false;
     _spawnHearts();
 
     // Reset notes
@@ -309,7 +332,7 @@ class RunToLoveGame extends FlameGame
     _cutscenePhase = 0;
     _cutsceneTimer = 0;
 
-    // Reset camera
+    // Reset shake & input
     _shaking = false;
     _shakeTimer = 0;
     _lastTapTime = DateTime(0);
@@ -340,7 +363,7 @@ class RunToLoveGame extends FlameGame
         overlays.add('hud');
         overlays.add('pauseOverlay');
       case GameState.finishCutscene:
-        overlays.add('hud'); // heart count stays visible
+        overlays.add('hud');
       case GameState.valentinePrompt:
         overlays.add('valentinePrompt');
       case GameState.celebration:

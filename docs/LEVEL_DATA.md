@@ -21,13 +21,21 @@
 - CP2_X_TILE: 120
 - CP3_X_TILE: 175 (optional)
 
-## Hazards
-- Spike tiles at: [35, 48, 92, 108, 142, 160]
+## Hazards (typed)
+- Spike: [35, 108]
+- Tall spike: [92, 160]
+- Rock: [48, 142]
 - Gaps at: [70..73], [130..134]
-  (Keep it forgiving; adjust later)
 
-## Hearts (10–20 total)
-- HEART_X_TILES: [10, 14, 18, 42, 55, 66, 78, 96, 110, 125, 146, 158, 170, 182]
+## Hearts (14 total, varied heights)
+- Ground: [10, 14, 66, 158]
+- Low: [18, 55, 110, 170]
+- High: [42, 96, 146]
+- Boost: [78, 125, 182]
+
+## Scenery (decorative)
+- Trees: [7, 22, 50, 80, 100, 138, 155, 190, 208]
+- Bushes: [5, 15, 30, 45, 62, 85, 115, 148, 172, 195]
 
 ## Notes (3)
 - NOTE1_X_TILE: 25  Text: COPY.md micro-note #1
