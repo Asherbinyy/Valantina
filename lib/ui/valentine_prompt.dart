@@ -44,7 +44,10 @@ class ValentinePrompt extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: () => game.answerYes(),
+                    onPressed: () {
+                      game.playClickSfx();
+                      game.answerYes();
+                    },
                     child: const Text('YES!'),
                   ),
                 ),
@@ -60,7 +63,10 @@ class ValentinePrompt extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: () => game.restart(),
+                    onPressed: () {
+                      game.playClickSfx();
+                      game.restart();
+                    },
                     child: const Text('Restart'),
                   ),
                 ),
@@ -86,7 +92,10 @@ class _SoundToggle extends StatelessWidget {
       builder: (_, on, _) {
         return IconButton(
           iconSize: kHitTarget,
-          onPressed: () => game.soundEnabled.value = !on,
+          onPressed: () {
+            game.playClickSfx();
+            game.soundEnabled.value = !on;
+          },
           icon: Icon(
             on ? Icons.volume_up_rounded : Icons.volume_off_rounded,
             color: AppColors.ink,

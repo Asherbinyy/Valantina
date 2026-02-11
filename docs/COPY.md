@@ -33,3 +33,10 @@ COUPON_LABEL: Coupon unlocked:
 COUPON_VALUE: A surprise date night with me ✨ (details soon)
 RESTART: Play again
 SCREENSHOT_HINT: (optional) Take a screenshot 📸
+
+## Gallery screen — DEFERRED to v2
+<!-- Gallery feature deferred: requires secure remote storage with password protection -->
+GALLERY_BTN: Our Gallery 📸
+TITLE: Our Gallery 💖
+EMPTY: Add photos to assets/gallery/ ❤️
+BACK: Back

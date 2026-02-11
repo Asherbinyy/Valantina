@@ -46,14 +46,20 @@ class Hud extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () => game.pauseGame(),
+                onPressed: () {
+                game.playClickSfx();
+                game.pauseGame();
+              },
                 icon: const Icon(Icons.pause_rounded, color: AppColors.ink),
               ),
             ),
           ),
 
-          // Cutscene text — center (during FINISH_CUTSCENE)
-          Positioned.fill(
+          // Cutscene text — bottom area (below characters)
+          Positioned(
+            bottom: 140,
+            left: kSafePadding * 2,
+            right: kSafePadding * 2,
             child: _CutsceneTextDisplay(game: game),
           ),
 
@@ -122,6 +128,7 @@ class _CutsceneTextDisplay extends StatelessWidget {
         return IgnorePointer(
           child: Center(
             child: Container(
+              constraints: const BoxConstraints(maxWidth: 280),
               padding:
                   const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: BoxDecoration(

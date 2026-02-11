@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 
 import '../constants.dart';
@@ -9,12 +10,12 @@ import '../run_to_love_game.dart';
 import 'heart.dart';
 import 'obstacle.dart';
 
-/// Player cat — auto-runs right, tap to jump, gravity, ground/gap checks.
+/// Player — sprite-based bunny with walk/jump/hurt/stand animations.
 class Player extends PositionComponent
     with CollisionCallbacks, HasGameReference<RunToLoveGame> {
+  // Physics
   final Vector2 velocity = Vector2.zero();
-  bool isOnGround = false;
-  int lastCheckpointIndex = -1;
+  bool isOnGround = true;
 
   // Hit recovery
   bool inRecovery = false;
@@ -24,10 +25,13 @@ class Player extends PositionComponent
   // Cutscene flag — disables hazard collisions
   bool inCutscene = false;
 
-  // Visuals (placeholder)
-  final Paint _paint = Paint()..color = const Color(0xFFFF8C42);
-  final Paint _blinkPaint = Paint();
-  final Paint _eyePaint = Paint()..color = const Color(0xFF2B2233);
+  // Sprites
+  late final Sprite _standSprite;
+  late final Sprite _walkSprite;
+  late final Sprite _jumpSprite;
+  late final Sprite _hurtSprite;
+  double _walkAnimTimer = 0;
+  bool _useWalkFrame = false;
 
   Player()
       : super(
@@ -37,11 +41,11 @@ class Player extends PositionComponent
 
   @override
   Future<void> onLoad() async {
-    // Hitbox slightly smaller than sprite — PROJECT_RULES.md §3
-    add(RectangleHitbox(
-      size: Vector2(size.x * 0.7, size.y * 0.8),
-      position: Vector2(size.x * 0.15, size.y * 0.1),
-    ));
+    add(RectangleHitbox());
+    _standSprite = Sprite(await Flame.images.load('sprites/player_stand.png'));
+    _walkSprite = Sprite(await Flame.images.load('sprites/player_walk.png'));
+    _jumpSprite = Sprite(await Flame.images.load('sprites/player_jump.png'));
+    _hurtSprite = Sprite(await Flame.images.load('sprites/player_hurt.png'));
   }
 
   @override
@@ -49,81 +53,107 @@ class Player extends PositionComponent
     super.update(dt);
     final state = game.state.value;
     // During cutscene, player is frozen (no auto-run, no gravity).
-    // Game handles deterministic snap positioning.
     if (state != GameState.playing && state != GameState.hitRecovery) {
       return;
     }
 
-    // Hit recovery countdown
+    // Walk anim toggle
+    _walkAnimTimer += dt;
+    if (_walkAnimTimer >= 0.15) {
+      _walkAnimTimer = 0;
+      _useWalkFrame = !_useWalkFrame;
+    }
+
+    // Auto-run
+    if (!inRecovery && !inCutscene) {
+      position.x += kRunSpeed * dt;
+    }
+
+    // Gravity
+    if (!inRecovery && !inCutscene) {
+      velocity.y += kGravity * dt;
+      velocity.y = min(velocity.y, kMaxFallSpeed);
+      position.y += velocity.y * dt;
+    }
+
+    // Ground check — only if NOT over a gap
+    final overGap = _isOverGap(position.x + size.x / 2);
+    if (overGap) {
+      // Falling into gap → trigger hit recovery
+      if (position.y > kGroundY) {
+        game.triggerHitRecovery();
+      }
+    } else if (position.y >= kGroundY - size.y) {
+      position.y = kGroundY - size.y;
+      velocity.y = 0;
+      isOnGround = true;
+    }
+
     if (inRecovery) {
       _recoveryTimer -= dt;
       _blinkTimer += dt;
       if (_recoveryTimer <= 0) {
-        _finishRecovery();
+        inRecovery = false;
+        _recoveryTimer = 0;
+        _blinkTimer = 0;
+        game.finishHitRecovery();
       }
-      return; // freeze position during recovery
+      return;
     }
-
-    // Auto-run
-    position.x += kRunSpeed * dt;
-
-    // Gravity
-    velocity.y += kGravity * dt;
-    velocity.y = min(velocity.y, kMaxFallSpeed);
-    position.y += velocity.y * dt;
-
-    // Ground check
-    if (_isOverGround()) {
-      if (position.y + height >= kGroundY) {
-        position.y = kGroundY - height;
-        velocity.y = 0;
-        isOnGround = true;
-      }
-    } else {
-      isOnGround = false;
-      if (position.y > kGroundY + kGapFallThreshold) {
-        game.triggerHitRecovery();
-      }
-    }
-
-    // Track checkpoints
-    _updateCheckpoint();
   }
 
   @override
   void render(Canvas canvas) {
-    final Paint p;
+    // Blink during recovery
+    if (inRecovery && (_blinkTimer * 10).floor() % 2 == 0) return;
+
+    Sprite sprite;
     if (inRecovery) {
-      final visible = (_blinkTimer * 8).floor() % 2 == 0;
-      _blinkPaint.color =
-          visible ? const Color(0xFFFF4444) : const Color(0x40FF8C42);
-      p = _blinkPaint;
+      sprite = _hurtSprite;
+    } else if (!isOnGround) {
+      sprite = _jumpSprite;
+    } else if (_useWalkFrame) {
+      sprite = _walkSprite;
     } else {
-      p = _paint;
+      sprite = _standSprite;
     }
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(size.toRect(), const Radius.circular(4)),
-      p,
-    );
-    // Eyes
-    canvas.drawCircle(Offset(size.x * 0.3, size.y * 0.35), 3, _eyePaint);
-    canvas.drawCircle(Offset(size.x * 0.7, size.y * 0.35), 3, _eyePaint);
+    sprite.render(canvas, size: size);
   }
 
-  // ── Actions ──────────────────────────────────────────
-
-  void jump({bool boost = false}) {
-    if (isOnGround && !inRecovery) {
-      velocity.y =
-          boost ? kJumpVelocity * kBoostJumpMultiplier : kJumpVelocity;
-      isOnGround = false;
-    }
+  void jump() {
+    if (!isOnGround) return;
+    velocity.y = kJumpVelocity;
+    isOnGround = false;
+    game.playJumpSfx();
   }
 
   void startRecovery() {
     inRecovery = true;
     _recoveryTimer = kHitRecoveryDuration;
     _blinkTimer = 0;
+
+    velocity.setZero();
+    isOnGround = true;
+    position.y = kGroundY - size.y;
+
+    final cpIndex = _checkpointIndex();
+    position.x = kCheckpointXTiles[cpIndex] * kTileSize;
+  }
+
+  int _checkpointIndex() {
+    for (int i = kCheckpointXTiles.length - 1; i >= 0; i--) {
+      if (position.x >= kCheckpointXTiles[i] * kTileSize) return i;
+    }
+    return 0;
+  }
+
+  /// Returns true if the given world-X pixel is over a gap (no ground).
+  bool _isOverGap(double worldX) {
+    final tileX = worldX / kTileSize;
+    for (final gap in kGapRanges) {
+      if (tileX >= gap[0] && tileX <= gap[1]) return true;
+    }
+    return false;
   }
 
   void fullReset() {
@@ -132,45 +162,10 @@ class Player extends PositionComponent
       ..y = kPlayerStartY;
     velocity.setZero();
     isOnGround = true;
-    lastCheckpointIndex = -1;
     inRecovery = false;
     inCutscene = false;
     _recoveryTimer = 0;
     _blinkTimer = 0;
-  }
-
-  // ── Internals ────────────────────────────────────────
-
-  void _finishRecovery() {
-    inRecovery = false;
-    _blinkTimer = 0;
-    final double x = lastCheckpointIndex < 0
-        ? kPlayerStartX
-        : kCheckpointXTiles[lastCheckpointIndex] * kTileSize;
-    position
-      ..x = x
-      ..y = kPlayerStartY;
-    velocity.setZero();
-    isOnGround = true;
-    game.finishHitRecovery();
-  }
-
-  bool _isOverGround() {
-    final centerX = position.x + width / 2;
-    final tileX = (centerX / kTileSize).floor();
-    for (final gap in kGapRanges) {
-      if (tileX >= gap[0] && tileX <= gap[1]) return false;
-    }
-    return tileX >= 0 && tileX < kTotalTilesX;
-  }
-
-  void _updateCheckpoint() {
-    for (int i = kCheckpointXTiles.length - 1; i >= 0; i--) {
-      if (position.x >= kCheckpointXTiles[i] * kTileSize) {
-        if (i > lastCheckpointIndex) lastCheckpointIndex = i;
-        break;
-      }
-    }
   }
 
   @override

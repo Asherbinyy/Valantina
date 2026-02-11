@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/valentina.iml" filepath="$PROJECT_DIR$/valentina.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/valentina_android.iml" filepath="$PROJECT_DIR$/android/valentina_android.iml" />
     </modules>
   </component>
 </project>

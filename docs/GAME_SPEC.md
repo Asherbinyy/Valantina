@@ -124,3 +124,27 @@ Pause overlay shows during PLAYING:
 - Enemies with AI
 - Physics engine complexity
 - Saves / accounts / leaderboards
+
+## 16) Gallery (photo album) — DEFERRED to v2
+> [!NOTE]
+> Deferred: requires secure remote storage with password protection.
+> Will be implemented as a post-launch patch.
+
+- Accessible from Celebration screen ("Our Gallery 📸" button)
+- Shows couple's personal photos in a swipeable carousel
+- Photos stored securely (not in Git repo)
+- Password-protected access
+- Cute pink-themed frame with heart decorations
+
+## 17) Audio & SFX ✅
+- Background music: soft pizzicato loop, auto-plays during PLAYING
+- SFX triggers:
+    - Jump: pluck (jump.ogg)
+    - Heart collect: confirmation chime (heart.ogg)
+    - Bonk (hit obstacle): impact thud (bonk.ogg)
+    - All hearts collected: maximize sparkle (all_hearts.ogg)
+    - Finish cutscene: door open (cutscene.ogg)
+    - Celebration (YES): pizzicato jingle (win.ogg)
+- Mute toggle respects all audio
+- All audio: Kenney.nl, CC0 license
+

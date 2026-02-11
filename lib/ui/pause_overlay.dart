@@ -27,9 +27,15 @@ class PauseOverlay extends StatelessWidget {
             children: [
               Text('Paused', style: headingStyle(fontSize: 20)),
               const SizedBox(height: 28),
-              _button('Resume', AppColors.yes, () => game.resumeGame()),
+              _button('Resume', AppColors.yes, () {
+                game.playClickSfx();
+                game.resumeGame();
+              }),
               const SizedBox(height: 12),
-              _button('Restart', AppColors.restart, () => game.restart()),
+              _button('Restart', AppColors.restart, () {
+                game.playClickSfx();
+                game.restart();
+              }),
               const SizedBox(height: 20),
               _SoundRow(game: game),
             ],
@@ -69,7 +75,10 @@ class _SoundRow extends StatelessWidget {
       builder: (_, on, _) {
         return IconButton(
           iconSize: kHitTarget,
-          onPressed: () => game.soundEnabled.value = !on,
+          onPressed: () {
+            game.playClickSfx();
+            game.soundEnabled.value = !on;
+          },
           icon: Icon(
             on ? Icons.volume_up_rounded : Icons.volume_off_rounded,
             color: AppColors.ink,
