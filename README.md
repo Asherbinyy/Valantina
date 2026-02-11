@@ -2,9 +2,6 @@
 
 A cute Valentine's Day platformer game built with **Flutter** & **Flame Engine**. Run, jump, collect hearts, and find your love! 🐰💝
 
-## 🎮 Play Now
-
-👉 **[Play on GitHub Pages](https://asherbinyy.github.io/Valantina/)**
 
 ## ✨ Features
 
