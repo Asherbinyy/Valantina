@@ -1,49 +1,39 @@
 import 'package:flame/components.dart';
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 
 import '../constants.dart';
 
-/// Finish flag — visual marker at the finish line (kFinishXTile).
-/// Pole with a small triangular flag on top. No collision.
-class FinishFlag extends PositionComponent {
-  static const double _poleW = 4;
-  static const double _poleH = 50;
-  static const double _flagW = 20;
-  static const double _flagH = 14;
+/// Finish door — 2×2 grid of door tile sprites.
+/// Placed behind the characters, opens during cutscene.
+class FinishDoor extends PositionComponent {
+  late final Sprite _topLeft;
+  late final Sprite _topRight;
+  late final Sprite _bottomLeft;
+  late final Sprite _bottomRight;
 
-  final Paint _polePaint = Paint()..color = const Color(0xFF8B6B4A);
-  final Paint _flagPaint = Paint()..color = const Color(0xFFFF2D6F);
-
-  FinishFlag()
+  FinishDoor()
       : super(
-          position: Vector2(
-            kFinishXTile * kTileSize + kTileSize / 2 - _poleW / 2,
-            kGroundY - _poleH,
-          ),
-          size: Vector2(_poleW + _flagW, _poleH),
-          priority: -1, // behind player
+          position: Vector2(kDoorWorldX, kDoorWorldY),
+          size: Vector2(kDoorWidth, kDoorHeight),
+          priority: -1, // behind characters
         );
 
   @override
+  Future<void> onLoad() async {
+    _topLeft = Sprite(await Flame.images.load('sprites/door_top_left.png'));
+    _topRight = Sprite(await Flame.images.load('sprites/door_top_right.png'));
+    _bottomLeft = Sprite(await Flame.images.load('sprites/door_bottom_left.png'));
+    _bottomRight = Sprite(await Flame.images.load('sprites/door_bottom_right.png'));
+  }
+
+  @override
   void render(Canvas canvas) {
-    // Pole
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, _poleW, _poleH),
-      _polePaint,
-    );
-    // Flag (triangle attached to top of pole)
-    final flag = Path()
-      ..moveTo(_poleW, 2)
-      ..lineTo(_poleW + _flagW, 2 + _flagH / 2)
-      ..lineTo(_poleW, 2 + _flagH)
-      ..close();
-    canvas.drawPath(flag, _flagPaint);
-    // "END" text dot on flag (small circle)
-    final dotPaint = Paint()..color = const Color(0xFFFFFFFF);
-    canvas.drawCircle(
-      Offset(_poleW + _flagW * 0.45, 2 + _flagH / 2),
-      2.5,
-      dotPaint,
-    );
+    final halfW = size.x / 2;
+    final halfH = size.y / 2;
+    _topLeft.render(canvas, position: Vector2.zero(), size: Vector2(halfW, halfH));
+    _topRight.render(canvas, position: Vector2(halfW, 0), size: Vector2(halfW, halfH));
+    _bottomLeft.render(canvas, position: Vector2(0, halfH), size: Vector2(halfW, halfH));
+    _bottomRight.render(canvas, position: Vector2(halfW, halfH), size: Vector2(halfW, halfH));
   }
 }

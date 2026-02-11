@@ -18,8 +18,8 @@ class HeartPlacement {
   const HeartPlacement(this.tileX, this.tier);
 }
 
-/// Obstacle type — 3 varieties per GAME_SPEC §6.
-enum ObstacleType { spike, tallSpike, rock }
+/// Obstacle type — spikes + bats per user spec.
+enum ObstacleType { spike, bat }
 
 class ObstacleData {
   final int tileX;
@@ -36,17 +36,18 @@ const int kGroundYTile = 10;
 const double kWorldWidth = kTotalTilesX * kTileSize;
 const double kGroundY = kGroundYTile * kTileSize;
 
-// ── Player ────────────────────────────────────────────
+// ── Player sprite sizing ──────────────────────────────
+// Original sprite: 120×201px → display at 36×60 (0.3× scale)
 const int kStartXTile = 3;
-const double kPlayerWidth = 28.0;
-const double kPlayerHeight = 36.0;
+const double kPlayerWidth = 36.0;
+const double kPlayerHeight = 60.0;
 const double kPlayerStartX = kStartXTile * kTileSize;
 const double kPlayerStartY = kGroundY - kPlayerHeight;
 
 // ── Auto-run (tune these) ─────────────────────────────
 const double kRunSpeed = 130.0;
 const double kJumpVelocity = -390.0;
-const double kBoostJumpMultiplier = 1.4;
+const double kBoostJumpMultiplier = 1.2;
 const int kDoubleTapWindowMs = 300;
 const double kGravity = 820.0;
 const double kMaxFallSpeed = 600.0;
@@ -54,17 +55,17 @@ const double kMaxFallSpeed = 600.0;
 // ── Debug ─────────────────────────────────────────────
 const bool kDebugInput = false;
 
-// ── Checkpoints (tile-X) ──────────────────────────────
-const List<int> kCheckpointXTiles = [60, 120, 175];
+// ── Checkpoints (tile-X) — placed BEFORE obstacles ───
+const List<int> kCheckpointXTiles = [0, 40, 80, 115, 145];
 
-// ── Hazards (typed) ───────────────────────────────────
+// ── Hazards (typed: spikes + bats) ────────────────────
 const List<ObstacleData> kObstacles = [
   ObstacleData(35, ObstacleType.spike),
-  ObstacleData(48, ObstacleType.rock),
-  ObstacleData(92, ObstacleType.tallSpike),
-  ObstacleData(108, ObstacleType.spike),
-  ObstacleData(142, ObstacleType.rock),
-  ObstacleData(160, ObstacleType.tallSpike),
+  ObstacleData(57, ObstacleType.bat),
+  ObstacleData(92, ObstacleType.spike),
+  ObstacleData(108, ObstacleType.bat),
+  ObstacleData(142, ObstacleType.spike),
+  ObstacleData(160, ObstacleType.bat),
 ];
 const List<List<int>> kGapRanges = [
   [70, 73],
@@ -73,12 +74,12 @@ const List<List<int>> kGapRanges = [
 const double kGapFallThreshold = 80.0;
 
 // ── Obstacle sizes ────────────────────────────────────
-const double kSpikeWidth = 26.0;
-const double kSpikeHeight = 26.0;
-const double kTallSpikeWidth = 22.0;
-const double kTallSpikeHeight = 40.0;
-const double kRockWidth = 36.0;
-const double kRockHeight = 20.0;
+// Spike sprite: 95×53 → display ~32×18 (0.34× scale)
+const double kSpikeWidth = 32.0;
+const double kSpikeHeight = 18.0;
+// Bat sprite: 21×21 → display 28×28
+const double kBatWidth = 28.0;
+const double kBatHeight = 28.0;
 
 // ── Ground segments (derived from gap ranges) ─────────
 const List<List<int>> kGroundSegments = [
@@ -114,15 +115,43 @@ const double kHeartHeightGround = 20.0;
 const double kHeartHeightLow = 52.0;
 const double kHeartHeightHigh = 90.0;
 const double kHeartHeightBoost = 130.0;
-const double kHeartSize = 22.0;
+// Heart sprite: 21×21 → display 24×24
+const double kHeartSize = 24.0;
 const double kHeartPopDuration = 0.4;
 
 // ── All-hearts bonus ─────────────────────────────────
 const String kAllHeartsNote = 'You have ALL my love 💖';
 
 // ── Scenery (decorative, no collision) ────────────────
-const List<int> kTreeTiles = [7, 22, 50, 80, 100, 138, 155, 190, 208];
-const List<int> kBushTiles = [5, 15, 30, 45, 62, 85, 115, 148, 172, 195];
+/// Scenery type for varied decorations.
+enum SceneryType { grass1, grass2, mushroomRed, mushroomBrown, cactus }
+
+class SceneryData {
+  final int tileX;
+  final SceneryType type;
+  const SceneryData(this.tileX, this.type);
+}
+
+const List<SceneryData> kScenery = [
+  SceneryData(5, SceneryType.grass1),
+  SceneryData(7, SceneryType.mushroomRed),
+  SceneryData(15, SceneryType.grass2),
+  SceneryData(22, SceneryType.cactus),
+  SceneryData(30, SceneryType.grass1),
+  SceneryData(45, SceneryType.mushroomBrown),
+  SceneryData(50, SceneryType.grass2),
+  SceneryData(62, SceneryType.mushroomRed),
+  SceneryData(80, SceneryType.grass1),
+  SceneryData(85, SceneryType.cactus),
+  SceneryData(100, SceneryType.grass2),
+  SceneryData(115, SceneryType.mushroomBrown),
+  SceneryData(138, SceneryType.grass1),
+  SceneryData(148, SceneryType.mushroomRed),
+  SceneryData(155, SceneryType.grass2),
+  SceneryData(172, SceneryType.cactus),
+  SceneryData(190, SceneryType.grass1),
+  SceneryData(195, SceneryType.mushroomBrown),
+];
 
 // ── Micro-notes (text from docs/COPY.md) ──────────────
 const int kNote1XTile = 25;
@@ -139,12 +168,21 @@ const double kNoteTypewriterCps = 30;
 // ── Finish / Cutscene ─────────────────────────────────
 const int kFinishXTile = 205;
 const int kQueenXTile = 212;
+// Queen uses same visual scale as player
 const double kQueenWidth = kPlayerWidth;
 const double kQueenHeight = kPlayerHeight;
-const double kPlayerQueenGap = 6.0;
+const double kPlayerQueenGap = 8.0;
+// Door: 2×2 tiles of 21px each → display 42×42
+const double kDoorWidth = 42.0;
+const double kDoorHeight = 42.0;
+// Door is behind/between the characters
+const double kDoorWorldX = kQueenXTile * kTileSize + kQueenWidth / 2 - kDoorWidth / 2;
+const double kDoorWorldY = kGroundY - kDoorHeight;
+// Player snap position: just left of queen, both grounded
 const double kQueenWorldX = kQueenXTile * kTileSize;
 const double kPlayerFinishX = kQueenWorldX - kPlayerWidth - kPlayerQueenGap;
 const double kPlayerFinishY = kGroundY - kPlayerHeight;
+// Cutscene timing
 const double kCutsceneTextDuration = 2.5;
 const double kCutscenePauseDuration = 0.8;
 const double kHeartParticleDuration = 2.5;

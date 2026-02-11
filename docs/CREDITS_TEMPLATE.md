@@ -33,3 +33,6 @@
 ## Fonts
 - Press Start 2P — Google Fonts :contentReference[oaicite:16]{index=16}
 - VT323 — Google Fonts :contentReference[oaicite:17]{index=17}
+
+## Gallery
+- Personal photos — no external license needed

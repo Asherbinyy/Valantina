@@ -3,7 +3,9 @@ import 'dart:developer' as developer;
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -26,7 +28,7 @@ class RunToLoveGame extends FlameGame
   /// Current game state — UI listens via ValueNotifier.
   final ValueNotifier<GameState> state = ValueNotifier(GameState.startMenu);
 
-  /// Sound toggle (visual only; wired to audio later).
+  /// Sound toggle.
   final ValueNotifier<bool> soundEnabled = ValueNotifier(true);
 
   /// Hearts collected — HUD listens.
@@ -61,6 +63,9 @@ class RunToLoveGame extends FlameGame
   // All-hearts bonus
   bool _allHeartsTriggered = false;
 
+  // Audio preloaded flag
+  bool _audioReady = false;
+
   @override
   Color backgroundColor() => AppColors.bgTop;
 
@@ -70,7 +75,64 @@ class RunToLoveGame extends FlameGame
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    // Flame defaults to 'assets/images/' prefix — override to 'assets/'
+    // so it finds sprites/ and tiles/ directories.
+    Flame.images.prefix = 'assets/';
     _buildLevel();
+    _preloadAudio();
+  }
+
+  // ── Audio ─────────────────────────────────────────────
+
+  Future<void> _preloadAudio() async {
+    try {
+      await FlameAudio.audioCache.loadAll([
+        'jump.ogg',
+        'heart.ogg',
+        'bonk.ogg',
+        'all_hearts.ogg',
+        'cutscene.ogg',
+        'win.ogg',
+        'music.ogg',
+        'click.ogg',
+        'celebrate.ogg',
+      ]);
+      _audioReady = true;
+    } catch (e) {
+      developer.log('Audio preload failed: $e');
+    }
+  }
+
+  void _playSfx(String file) {
+    if (!_audioReady || !soundEnabled.value) return;
+    FlameAudio.play(file);
+  }
+
+  void playJumpSfx() => _playSfx('jump.ogg');
+  void playClickSfx() => _playSfx('click.ogg');
+  void _playHeartSfx() => _playSfx('heart.ogg');
+  void _playBonkSfx() => _playSfx('bonk.ogg');
+  void _playAllHeartsSfx() => _playSfx('all_hearts.ogg');
+  void _playCutsceneSfx() => _playSfx('cutscene.ogg');
+  void _playWinSfx() => _playSfx('win.ogg');
+  void _playCelebrateSfx() => _playSfx('celebrate.ogg');
+
+  void _startMusic() {
+    if (!_audioReady || !soundEnabled.value) return;
+    FlameAudio.bgm.play('music.ogg', volume: 0.35);
+  }
+
+  void _pauseMusic() {
+    FlameAudio.bgm.pause();
+  }
+
+  void _resumeMusic() {
+    if (!_audioReady || !soundEnabled.value) return;
+    FlameAudio.bgm.resume();
+  }
+
+  void _stopMusic() {
+    FlameAudio.bgm.stop();
   }
 
   // ── Level construction ───────────────────────────────
@@ -82,14 +144,11 @@ class RunToLoveGame extends FlameGame
     }
 
     // Scenery (decorative, behind everything)
-    for (final tileX in kTreeTiles) {
-      world.add(Tree(tileX: tileX));
-    }
-    for (final tileX in kBushTiles) {
-      world.add(Bush(tileX: tileX));
+    for (final data in kScenery) {
+      world.add(Scenery(tileX: data.tileX, type: data.type));
     }
 
-    // Typed obstacles
+    // Typed obstacles (spikes + bats)
     for (final data in kObstacles) {
       world.add(Obstacle(tileX: data.tileX, type: data.type));
     }
@@ -97,8 +156,8 @@ class RunToLoveGame extends FlameGame
     // Hearts with varied heights
     _spawnHearts();
 
-    // Finish flag at end
-    world.add(FinishFlag());
+    // Finish door at end
+    world.add(FinishDoor());
 
     // Queen at end (same scale as player)
     world.add(Queen());
@@ -138,6 +197,7 @@ class RunToLoveGame extends FlameGame
         if (player.isOnGround) {
           player.isOnGround = false;
         }
+        playJumpSfx();
         if (kDebugInput) developer.log('  → BOOST applied');
       }
     } else {
@@ -167,12 +227,14 @@ class RunToLoveGame extends FlameGame
 
   void onHeartCollected() {
     heartsCollected.value++;
+    _playHeartSfx();
 
     // All-hearts bonus check
     if (!_allHeartsTriggered &&
         heartsCollected.value >= kHeartPlacements.length) {
       _allHeartsTriggered = true;
       _showNote(kAllHeartsNote);
+      _playAllHeartsSfx();
       world.add(HeartParticles());
     }
   }
@@ -236,6 +298,10 @@ class RunToLoveGame extends FlameGame
     // Clear notes
     activeNoteText.value = null;
 
+    // Stop music, play cutscene SFX
+    _stopMusic();
+    _playCutsceneSfx();
+
     // Heart particles
     world.add(HeartParticles());
 
@@ -272,18 +338,21 @@ class RunToLoveGame extends FlameGame
 
   void startGame() {
     state.value = GameState.playing;
+    _startMusic();
     _syncOverlays();
   }
 
   void pauseGame() {
     if (state.value != GameState.playing) return;
     state.value = GameState.paused;
+    _pauseMusic();
     _syncOverlays();
   }
 
   void resumeGame() {
     if (state.value != GameState.paused) return;
     state.value = GameState.playing;
+    _resumeMusic();
     _syncOverlays();
   }
 
@@ -291,6 +360,7 @@ class RunToLoveGame extends FlameGame
     if (state.value != GameState.playing) return;
     state.value = GameState.hitRecovery;
     player.startRecovery();
+    _playBonkSfx();
     _startShake();
   }
 
@@ -300,12 +370,19 @@ class RunToLoveGame extends FlameGame
 
   void answerYes() {
     state.value = GameState.celebration;
+    _playWinSfx();
+    // Delayed celebrate jingle for the confetti moment
+    Future.delayed(const Duration(milliseconds: 600), () {
+      _playCelebrateSfx();
+    });
     _syncOverlays();
   }
 
   /// Full restart per PROJECT_RULES.md §4.
   void restart() {
     state.value = GameState.restarting;
+
+    _stopMusic();
 
     player.fullReset();
 

@@ -1,42 +1,60 @@
 # docs/ASSETS.md
-# ASSETS — Where to Get Characters, Tiles, Audio (with license notes)
+# ASSETS — Final Asset Inventory ✅
 
-## Pixel art sources (recommended)
-- Kenney (many CC0 packs; consistent quality) :contentReference[oaicite:11]{index=11}
-- itch.io asset marketplace (search pixel cats/platformer) :contentReference[oaicite:12]{index=12}
-- OpenGameArt (many CC0/attribution options; check each page) :contentReference[oaicite:13]{index=13}
+## All assets in place
 
-## Level editor (optional)
-- Tiled map editor (TMX) :contentReference[oaicite:14]{index=14}
+### Sprites (`assets/sprites/`)
+| File | What | Original |
+|---|---|---|
+| `player_stand.png` | Bunny 1 standing | bunny1_stand |
+| `player_walk.png` | Bunny 1 walking | bunny1_walk1 |
+| `player_jump.png` | Bunny 1 jumping | bunny1_jump |
+| `player_hurt.png` | Bunny 1 hurt | bunny1_hurt |
+| `player_ready.png` | Bunny 1 ready | bunny1_ready |
+| `queen_stand.png` | Bunny 2 (queen) | bunny2_stand |
+| `spikes_top.png` | Ground spike hazard | – |
+| `spikes_bottom.png` | Ceiling spike (unused) | – |
+| `bat1.png` | Flying bat hazard | tile_0441 |
+| `bat2.png` | Bat alt frame | tile_0442 |
+| `heart.png` | Heart collectible (red) | tile_0373 |
+| `heart_alt.png` | Heart alt (red pixel) | tile_0374 |
+| `heart_grey.png` | Heart grey (uncollected) | tile_0375 |
+| `grass1.png` | Grass decoration small | – |
+| `grass2.png` | Grass decoration large | – |
+| `mushroom_red.png` | Red mushroom scenery | – |
+| `mushroom_brown.png` | Brown mushroom scenery | – |
+| `cactus.png` | Cactus decoration | – |
+| `flag.png` | Flag (decorative) | tile_0312 |
+| `door_top_left.png` | Door 2×2 tile | tile_0730 |
+| `door_top_right.png` | Door 2×2 tile | tile_0731 |
+| `door_bottom_left.png` | Door 2×2 tile | tile_0732 |
+| `door_bottom_right.png` | Door 2×2 tile | tile_0733 |
 
-## What you need (minimum)
-### Player Cat sprite sheet
-- Run loop
-- Jump
-- Bonk/Stumble (or a single “hurt” frame)
-- Celebrate (optional)
+### Tiles (`assets/tiles/`)
+| File | What | Original |
+|---|---|---|
+| `ground.png` | Ground tileable | ground_grass |
+| `ground_small.png` | Ground small variant | ground_grass_small |
+| `ground_broken.png` | Ground broken variant | ground_grass_broken |
+| `ground_small_broken.png` | Ground small broken | ground_grass_small_broken |
 
-### Queen Cat sprite sheet
-- Idle
-- Wave/blush (optional but great)
+### Audio (`assets/audio/`)
+| File | When | Source |
+|---|---|---|
+| `jump.ogg` | Player jumps | Kenney Interface (pluck_001) |
+| `heart.ogg` | Heart collected | Kenney Interface (confirmation_002) |
+| `bonk.ogg` | Hit obstacle | Kenney Impact (impactGeneric_light_003) |
+| `all_hearts.ogg` | All hearts bonus | Kenney Interface (maximize_008) |
+| `cutscene.ogg` | Meet queen | Kenney RPG (doorOpen_1) |
+| `win.ogg` | Celebration | Kenney Music (jingles_PIZZI16) |
+| `music.ogg` | Background loop | Kenney Music (jingles_PIZZI10) |
 
-### Environment
-- Ground tiles
-- 1–2 platforms
-- Hazard sprite (spike or puff)
-- Background layers (2 parallax layers)
+### Fonts (`assets/fonts/`)
+| File | Use |
+|---|---|
+| `PressStart2P-Regular.ttf` | Headings |
+| `VT323-Regular.ttf` | Body/dialogue |
 
-### UI
-- 1 pixel panel frame (or draw in code)
-- Icons: sound, pause (optional)
-
-### Audio
-- Loop music (soft)
-- jump boop
-- heart ting
-- bonk bup
-- win sparkle
-
-## License & credits rules
-- Every asset must have a recorded license + source URL in docs/CREDITS.md.
-- Prefer CC0 to avoid headaches (Kenney often CC0; verify per asset page). :contentReference[oaicite:15]{index=15}
+## Source & License
+- All sprites & audio: Kenney.nl (CC0)
+- Fonts: Google Fonts (OFL)

@@ -1,76 +1,77 @@
 import 'package:flame/components.dart';
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 
 import '../constants.dart';
 
-/// Decorative tree — no hitbox, no collision, renders behind player.
-/// Simple trunk + triangular foliage.
-class Tree extends PositionComponent {
-  static const double _trunkW = 8;
-  static const double _trunkH = 18;
-  static const double _foliageW = 28;
-  static const double _foliageH = 30;
-  static const double _totalH = _trunkH + _foliageH;
+/// Decorative scenery — sprite-based, no collision, renders behind player.
+/// Types: grass1, grass2, mushroomRed, mushroomBrown, cactus.
+class Scenery extends PositionComponent {
+  final SceneryType type;
+  late final Sprite _sprite;
 
-  final Paint _trunkPaint = Paint()..color = const Color(0xFF8B6B4A);
-  final Paint _foliagePaint = Paint()..color = const Color(0xFF5DAE6B);
-
-  Tree({required int tileX})
+  Scenery({required int tileX, required this.type})
       : super(
           position: Vector2(
-            tileX * kTileSize + (kTileSize - _foliageW) / 2,
-            kGroundY - _totalH,
+            tileX * kTileSize,
+            kGroundY - _heightFor(type),
           ),
-          size: Vector2(_foliageW, _totalH),
+          size: Vector2(_widthFor(type), _heightFor(type)),
           priority: -1, // render behind player
         );
 
-  @override
-  void render(Canvas canvas) {
-    // Trunk (centered at bottom)
-    final trunkX = (size.x - _trunkW) / 2;
-    canvas.drawRect(
-      Rect.fromLTWH(trunkX, _foliageH, _trunkW, _trunkH),
-      _trunkPaint,
-    );
-    // Foliage (triangle)
-    final foliage = Path()
-      ..moveTo(size.x / 2, 0)
-      ..lineTo(size.x, _foliageH)
-      ..lineTo(0, _foliageH)
-      ..close();
-    canvas.drawPath(foliage, _foliagePaint);
+  static double _widthFor(SceneryType t) {
+    switch (t) {
+      case SceneryType.grass1:
+        return 20.0;
+      case SceneryType.grass2:
+        return 28.0;
+      case SceneryType.mushroomRed:
+        return 24.0;
+      case SceneryType.mushroomBrown:
+        return 24.0;
+      case SceneryType.cactus:
+        return 22.0;
+    }
   }
-}
 
-/// Decorative bush — no hitbox, no collision, renders behind player.
-/// Small rounded green shape on the ground.
-class Bush extends PositionComponent {
-  static const double _w = 22;
-  static const double _h = 14;
+  static double _heightFor(SceneryType t) {
+    switch (t) {
+      case SceneryType.grass1:
+        return 20.0;
+      case SceneryType.grass2:
+        return 24.0;
+      case SceneryType.mushroomRed:
+        return 30.0;
+      case SceneryType.mushroomBrown:
+        return 25.0;
+      case SceneryType.cactus:
+        return 40.0;
+    }
+  }
 
-  final Paint _paint = Paint()..color = const Color(0xFF4A9E5A);
+  static String _spriteFor(SceneryType t) {
+    switch (t) {
+      case SceneryType.grass1:
+        return 'sprites/grass1.png';
+      case SceneryType.grass2:
+        return 'sprites/grass2.png';
+      case SceneryType.mushroomRed:
+        return 'sprites/mushroom_red.png';
+      case SceneryType.mushroomBrown:
+        return 'sprites/mushroom_brown.png';
+      case SceneryType.cactus:
+        return 'sprites/cactus.png';
+    }
+  }
 
-  Bush({required int tileX})
-      : super(
-          position: Vector2(
-            tileX * kTileSize + (kTileSize - _w) / 2,
-            kGroundY - _h,
-          ),
-          size: Vector2(_w, _h),
-          priority: -1, // render behind player
-        );
+  @override
+  Future<void> onLoad() async {
+    _sprite = Sprite(await Flame.images.load(_spriteFor(type)));
+  }
 
   @override
   void render(Canvas canvas) {
-    // Two overlapping circles for a bushy shape
-    canvas.drawOval(
-      Rect.fromLTWH(0, _h * 0.2, _w * 0.65, _h * 0.8),
-      _paint,
-    );
-    canvas.drawOval(
-      Rect.fromLTWH(_w * 0.35, 0, _w * 0.65, _h),
-      _paint,
-    );
+    _sprite.render(canvas, size: size);
   }
 }

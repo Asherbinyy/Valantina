@@ -29,14 +29,15 @@ class CelebrationScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(kSafePadding),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.max,
                   children: [
+                     const Spacer(),
                     Text(
                       'YAY!! 🎉',
                       style: headingStyle(fontSize: 24),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     Text(
                       "Happy Valentine's Day, my love.",
                       style: bodyStyle(fontSize: 26),
@@ -61,7 +62,7 @@ class CelebrationScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'A surprise date night with me ✨\n(details soon)',
+                            "You're invited to spend\nthe whole day with me ✨\n(details soon)",
                             style: bodyStyle(fontSize: 24)
                                 .copyWith(color: AppColors.yes),
                             textAlign: TextAlign.center,
@@ -82,7 +83,10 @@ class CelebrationScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
-                        onPressed: () => game.restart(),
+                        onPressed: () {
+                          game.playClickSfx();
+                          game.restart();
+                        },
                         child: const Text('Play again'),
                       ),
                     ),
@@ -92,6 +96,31 @@ class CelebrationScreen extends StatelessWidget {
                       style: bodyStyle(fontSize: 20)
                           .copyWith(color: AppColors.restart),
                       textAlign: TextAlign.center,
+                    ),
+                    const Spacer(),
+                    // Creator credit — pushed to bottom
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Created with 💖 by Sherbini',
+                            style: bodyStyle(fontSize: 14).copyWith(
+                              color: AppColors.ink.withValues(alpha: 0.45),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'github.com/Asherbinyy',
+                            style: bodyStyle(fontSize: 11).copyWith(
+                              color: AppColors.ink.withValues(alpha: 0.3),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -105,7 +134,6 @@ class CelebrationScreen extends StatelessWidget {
 }
 
 /// Confetti particle system — colorful squares/rectangles falling from top.
-/// Uses CustomPainter + AnimationController, no external dependencies.
 class _ConfettiOverlay extends StatefulWidget {
   const _ConfettiOverlay();
 
@@ -162,13 +190,13 @@ class _ConfettiOverlayState extends State<_ConfettiOverlay>
 }
 
 class _ConfettiPiece {
-  final double startX; // 0..1 fraction of width
-  final double startY; // negative = starts above screen
-  final double speed; // fall speed multiplier
-  final double wobble; // horizontal wobble amplitude
-  final double wobbleFreq; // wobble frequency
-  final double rotation; // rotation speed
-  final double w, h; // piece dimensions
+  final double startX;
+  final double startY;
+  final double speed;
+  final double wobble;
+  final double wobbleFreq;
+  final double rotation;
+  final double w, h;
   final Color color;
 
   _ConfettiPiece({
@@ -210,13 +238,11 @@ class _ConfettiPainter extends CustomPainter {
       final t = progress * p.speed;
       final y = (p.startY + t * 1.5) * size.height;
 
-      // Skip if off screen
       if (y > size.height + 20 || y < -30) continue;
 
       final x = p.startX * size.width +
           sin(progress * p.wobbleFreq * pi * 2) * p.wobble;
 
-      // Fade out in last 20% of animation
       final alpha = progress > 0.8
           ? ((1.0 - progress) / 0.2).clamp(0.0, 1.0)
           : 1.0;

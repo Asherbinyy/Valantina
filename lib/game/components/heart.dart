@@ -2,18 +2,20 @@ import 'dart:math';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 
 import '../constants.dart';
 import '../run_to_love_game.dart';
 
-/// Heart collectible — varied heights per tier, pop + fade on collect.
+/// Heart collectible — sprite-based with pop + fade on collect.
 class Heart extends PositionComponent
     with CollisionCallbacks, HasGameReference<RunToLoveGame> {
   bool collected = false;
   double _animTimer = 0;
+  double _opacity = 1.0;
 
-  final Paint _paint = Paint()..color = const Color(0xFFFF2D6F);
+  late final Sprite _sprite;
 
   Heart({required int tileX, HeartTier tier = HeartTier.low})
       : super(
@@ -41,6 +43,7 @@ class Heart extends PositionComponent
   @override
   Future<void> onLoad() async {
     add(RectangleHitbox(isSolid: true));
+    _sprite = Sprite(await Flame.images.load('sprites/heart.png'));
   }
 
   @override
@@ -60,8 +63,7 @@ class Heart extends PositionComponent
       final s = 1.0 + progress * 1.5;
       scale = Vector2.all(s);
     } else {
-      final fadeProgress = (progress - 0.5) / 0.5;
-      _paint.color = Color(0xFFFF2D6F).withValues(alpha: 1.0 - fadeProgress);
+      _opacity = 1.0 - ((progress - 0.5) / 0.5);
     }
 
     if (progress >= 1.0) {
@@ -71,14 +73,12 @@ class Heart extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    final w = size.x;
-    final h = size.y;
-    final path = Path()
-      ..moveTo(w / 2, h * 0.35)
-      ..cubicTo(w * 0.15, 0, 0, h * 0.4, w / 2, h)
-      ..moveTo(w / 2, h * 0.35)
-      ..cubicTo(w * 0.85, 0, w, h * 0.4, w / 2, h);
-    canvas.drawPath(path, _paint);
+    if (_opacity < 1.0) {
+      final paint = Paint()..color = Color.fromRGBO(255, 255, 255, _opacity);
+      _sprite.render(canvas, size: size, overridePaint: paint);
+    } else {
+      _sprite.render(canvas, size: size);
+    }
   }
 
   void collect() {

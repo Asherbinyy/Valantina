@@ -14,7 +14,10 @@ class StartScreen extends StatelessWidget {
       color: Colors.transparent,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => game.startGame(),
+        onTap: () {
+          game.playClickSfx();
+          game.startGame();
+        },
         child: Container(
           decoration: const BoxDecoration(gradient: kBgGradient),
           child: SafeArea(
@@ -37,6 +40,29 @@ class StartScreen extends StatelessWidget {
                     style: bodyStyle(fontSize: 24),
                     textAlign: TextAlign.center,
                   ),
+                    const SizedBox(height: 14),
+                    // ── For Faroh — cute dedication ──
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.card.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.yes.withValues(alpha: 0.5),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        '~ For Faroh ~  💝',
+                        style: bodyStyle(fontSize: 18).copyWith(
+                          color: AppColors.yes,
+                          fontStyle: FontStyle.italic,
+                          letterSpacing: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   const Spacer(flex: 2),
                   // ── CTA (pulsing) ──
                   const _PulsingCta(),
@@ -111,6 +137,7 @@ class _SoundToggle extends StatelessWidget {
         return IconButton(
           iconSize: kHitTarget,
           onPressed: () {
+            game.playClickSfx();
             game.soundEnabled.value = !game.soundEnabled.value;
           },
           icon: Icon(
