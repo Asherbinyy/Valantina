@@ -84,8 +84,6 @@ All game assets from [Kenney.nl](https://kenney.nl/) — **CC0 (public domain)**
 
 **Sherbini** — [@Asherbinyy](https://github.com/Asherbinyy)
 
-Made with 💖 for Faroh.
-
 ## 📄 License
 
 MIT License — feel free to fork and make your own Valentine's game!
